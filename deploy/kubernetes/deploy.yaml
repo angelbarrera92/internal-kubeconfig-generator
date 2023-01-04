@@ -1,0 +1,74 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: k8spin-system
+  labels:
+    app: k8spin.cloud
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: internal-kubeconfig-generator
+  namespace: k8spin-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: internal-kubeconfig-generator
+rules:
+# Allow to get, list and watch namespaces
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "watch"]
+# Allow to get, list and watch secrets
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+# Allow to get, list and watch service accounts
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["get", "list", "watch"]
+# Allow to get, list and watch customresourcedefinitions
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "watch"]
+# Allow to post events
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: internal-kubeconfig-generator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: internal-kubeconfig-generator
+subjects:
+- kind: ServiceAccount
+  name: internal-kubeconfig-generator
+  namespace: k8spin-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: k8spin.cloud
+  name: internal-kubeconfig-generator
+  namespace: k8spin-system
+spec:
+  selector:
+    matchLabels:
+      app: k8spin.cloud
+  template:
+    metadata:
+      labels:
+        app: k8spin.cloud
+    spec:
+      serviceAccountName: internal-kubeconfig-generator
+      containers:
+        - name: internal-kubeconfig-generator
+          image: ghcr.io/angelbarrera92/internal-kubeconfig-generator:latest
+          imagePullPolicy: Always

@@ -1,0 +1,28 @@
+# Create a Kubernetes job that runs a kubectl command to list all namespaces
+# Use the kubeconfig that is inside the secret provider-kubernetes-view-kubeconfig in the kubeconfig key
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: list-namespaces
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl:1.25
+        command: ["kubectl", "get", "ns", "--kubeconfig", "/kubeconfig/config"]
+        volumeMounts:
+        - name: kubeconfig
+          mountPath: /kubeconfig
+          readOnly: true
+      volumes:
+      - name: kubeconfig
+        secret:
+          secretName: provider-kubernetes-view-kubeconfig
+          items:
+          - key: kubeconfig
+            path: config
+      restartPolicy: Never
+  backoffLimit: 4

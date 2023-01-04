@@ -1,0 +1,40 @@
+---
+# Create a clusterrole that allows to list namespaces
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: provider-kubernetes-view
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "watch"]
+---
+# Create a clusterrolebinding that binds the clusterrole to the serviceaccount provider-kubernetes-view
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: provider-kubernetes-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: provider-kubernetes-view
+subjects:
+- kind: ServiceAccount
+  name: provider-kubernetes-view
+  namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: provider-kubernetes-view
+  namespace: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: provider-kubernetes-view
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: provider-kubernetes-view
+    x.k8spin.cloud/kubeconfig: ""
+type: kubernetes.io/service-account-token
